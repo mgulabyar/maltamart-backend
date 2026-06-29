@@ -2,7 +2,7 @@ const express = require("express");
 const ensureAuthenticated = require("../middlewares/Auth");
 
 const router = express.Router();
-
+// asfa
 router.get("/", ensureAuthenticated, (req, res) => {
   res.status(200).json([
     { id: 1, name: "Minneola Tangelo", price: 599, category: "Fruits", stock: 45, image: "tangelo.jpg" },
