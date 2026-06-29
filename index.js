@@ -7,7 +7,7 @@ require("./models/db");
 const ProductRouter = require("./routes/ProductRouter");
 const VarietyRouter = require("./routes/varietyRoutes");
 const AuthRouter = require("./routes/AuthRouter");
-const FavouriteRouter = require("./routes/favouriteRoutes");
+// const FavouriteRouter = require("./routes/favouriteRoutes");
 const app = express();
 
 app.use(express.json());
