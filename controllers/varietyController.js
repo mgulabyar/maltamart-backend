@@ -23,7 +23,7 @@
 //       data: variety,
 //     });
 //   } catch (error) {
-//     console.error(error);
+//     console.error("createVariety: Error creating variety:", error);
 //     res.status(500).json({ error: error.message });
 //   }
 // };
@@ -51,20 +51,46 @@
 //       data: updatedVariety,
 //     });
 //   } catch (error) {
-//     console.error(error);
+//     console.error("updateVariety: Error updating variety:", error); 
 //     res.status(500).json({ error: error.message });
 //   }
 // };
 
 // exports.getVarieties = async (req, res) => {
 //   try {
-//     const varieties = await Variety.find().sort({ createdAt: -1 });
+//     console.log("getVarieties: Starting fetch operation...");
+//     const startTime = Date.now();
+
+//     const page = parseInt(req.query.page) || 1; 
+//     const limit = parseInt(req.query.limit) || 0; 
+//     const skip = limit > 0 ? (page - 1) * limit : 0;
+
+//     let query = Variety.find();
+
+//     if (limit > 0) {
+//       query = query.skip(skip).limit(limit);
+//     }
+
+//     const varieties = await query.sort({ createdAt: -1 });
+
+//     const totalVarieties = await Variety.countDocuments();
+
+//     console.log(
+//       `getVarieties: DB query completed in ${
+//         Date.now() - startTime
+//       }ms. Fetched ${varieties.length} varieties out of ${totalVarieties}.`
+//     );
 
 //     res.status(200).json({
 //       success: true,
 //       data: varieties,
+//       page: limit > 0 ? page : undefined, 
+//       limit: limit > 0 ? limit : undefined,
+//       totalVarieties,
+//       totalPages: limit > 0 ? Math.ceil(totalVarieties / limit) : 1, 
 //     });
 //   } catch (error) {
+//     console.error("getVarieties: Error during fetch:", error); 
 //     res.status(500).json({ error: error.message });
 //   }
 // };
@@ -80,6 +106,7 @@
 //       data: variety,
 //     });
 //   } catch (error) {
+//     console.error("getVariety: Error fetching single variety:", error); 
 //     res.status(500).json({ error: error.message });
 //   }
 // };
@@ -95,6 +122,7 @@
 //       message: "Variety deleted successfully",
 //     });
 //   } catch (error) {
+//     console.error("deleteVariety: Error deleting variety:", error); 
 //     res.status(500).json({ error: error.message });
 //   }
 // };
@@ -124,7 +152,7 @@ exports.createVariety = async (req, res) => {
       data: variety,
     });
   } catch (error) {
-    console.error("createVariety: Error creating variety:", error); // Added logging
+    console.error("createVariety: Error creating variety:", error); // Added detailed logging
     res.status(500).json({ error: error.message });
   }
 };
@@ -152,26 +180,19 @@ exports.updateVariety = async (req, res) => {
       data: updatedVariety,
     });
   } catch (error) {
-    console.error("updateVariety: Error updating variety:", error); // Added logging
+    console.error("updateVariety: Error updating variety:", error); // Added detailed logging
     res.status(500).json({ error: error.message });
   }
 };
 
-// ====================================================================================
-// UPDATED `getVarieties` FUNCTION
-// - Added detailed logging.
-// - Added optional pagination to handle large datasets more efficiently.
-// - Added countDocuments for total variety count.
-// ====================================================================================
 exports.getVarieties = async (req, res) => {
   try {
     console.log("getVarieties: Starting fetch operation...");
     const startTime = Date.now();
 
-    // Optional: Implement pagination. If no page/limit provided, it will fetch all.
-    const page = parseInt(req.query.page) || 1; // Default to page 1
-    const limit = parseInt(req.query.limit) || 0; // Default 0 means no limit (fetch all)
-    const skip = limit > 0 ? (page - 1) * limit : 0; // Only skip if limit is active
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 0; // 0 means no limit (fetch all)
+    const skip = limit > 0 ? (page - 1) * limit : 0;
 
     let query = Variety.find();
 
@@ -181,7 +202,7 @@ exports.getVarieties = async (req, res) => {
 
     const varieties = await query.sort({ createdAt: -1 });
 
-    const totalVarieties = await Variety.countDocuments(); // Get total count for pagination info
+    const totalVarieties = await Variety.countDocuments();
 
     console.log(
       `getVarieties: DB query completed in ${
@@ -192,10 +213,10 @@ exports.getVarieties = async (req, res) => {
     res.status(200).json({
       success: true,
       data: varieties,
-      page: limit > 0 ? page : undefined, // Only send page info if pagination is active
+      page: limit > 0 ? page : undefined,
       limit: limit > 0 ? limit : undefined,
       totalVarieties,
-      totalPages: limit > 0 ? Math.ceil(totalVarieties / limit) : 1, // Calculate total pages if pagination is active
+      totalPages: limit > 0 ? Math.ceil(totalVarieties / limit) : 1,
     });
   } catch (error) {
     console.error("getVarieties: Error during fetch:", error); // CRITICAL: Log the actual error
@@ -205,16 +226,22 @@ exports.getVarieties = async (req, res) => {
 
 exports.getVariety = async (req, res) => {
   try {
+    console.log(`getVariety: Fetching variety with ID: ${req.params.id}`); // Added detailed logging
+    const startTime = Date.now();
     const variety = await Variety.findById(req.params.id);
 
-    if (!variety) return res.status(404).json({ error: "Variety not found" });
+    if (!variety) {
+      console.warn(`getVariety: Variety not found for ID: ${req.params.id}`); // Added detailed logging
+      return res.status(404).json({ error: "Variety not found" });
+    }
 
+    console.log(`getVariety: Variety fetched in ${Date.now() - startTime}ms.`); // Added detailed logging
     res.status(200).json({
       success: true,
       data: variety,
     });
   } catch (error) {
-    console.error("getVariety: Error fetching single variety:", error); // Added logging
+    console.error("getVariety: Error fetching single variety:", error); // Added detailed logging
     res.status(500).json({ error: error.message });
   }
 };
@@ -223,14 +250,15 @@ exports.deleteVariety = async (req, res) => {
   try {
     const deleted = await Variety.findByIdAndDelete(req.params.id);
 
-    if (!deleted) return res.status(404).json({ error: "Variety not found" });
+    if (!deleted)
+      return res.status(404).json({ error: "Variety not found" });
 
     res.status(200).json({
       success: true,
       message: "Variety deleted successfully",
     });
   } catch (error) {
-    console.error("deleteVariety: Error deleting variety:", error); // Added logging
+    console.error("deleteVariety: Error deleting variety:", error); // Added detailed logging
     res.status(500).json({ error: error.message });
   }
 };
